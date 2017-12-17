@@ -5,14 +5,15 @@
   "main": "dist/chartx.js",
   "scripts": {
     "prestart": "babel-node tools/startMessage.js",
-    "start": "npm-run-all --parallel build:watch test",
+    "start": "npm-run-all --parallel build:watch test open",
     "poststart": "babel-node tools/endMessage.js",
     "build": "webpack --config webpack.config.babel.js",
     "build:watch": "npm run build -- --watch",
     "build_prod": "webpack --config webpack.prod.config.babel.js",
     "build_prod:watch": "npm run build_prod -- --watch",
     "test": "jest",
-    "test:watch": "npm run test -- --watch"
+    "test:watch": "npm run test -- --watch",
+    "open": "babel-node tools/openDemo.js"
   },
   "repository": {
     "type": "git",
