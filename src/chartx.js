@@ -1,87 +1,79 @@
-import {combineReducer, createStore, combineUpdater} from './stateManager'
+import uuidv1 from 'uuid/v1'
+import {combineReducer, createStore, createReducer} from './stateManager'
+import Chart from './Chart'
+
+
+
+
+let _store, // The store for all charts state
+    _chartMap = {} // chart map to quickly find chart
 
 /**
- * The animation loop key for cancel animation
- */
-let _animationLoopKey = null
-/**
- * Accumulator for time-based animation
- */
-let _accumulator = 0
-/**
- * The default fps
- */
-let _fps = 60
-/**
- * The store for game
- */
-let _store = {}
-
-let _updaterMap = {}
-
-let _rendererMap = {}
-
-/**
- * Trigger game loop
+ * Trigger render loop
  */
 function _loop (lastTimestamp) {
-  _animationLoopKey = window.requestAnimationFrame(() => {
+  _loop.animationKey = window.requestAnimationFrame(() => {
     const now = Date.now()
-    const dt = 1000 / _fps
-    _accumulator += now - lastTimestamp
+    const dt = 1000 / _loop._fps
+    _loop._accumulator = _loop._accumulator ? _loop._accumulator : 0
+    _loop._accumulator += now - lastTimestamp
 
-    if (_accumulator >= dt) {
-      while (_accumulator >= dt) {
-        _accumulator -= dt
+    // New frame time
+    if (_loop._accumulator >= dt) {
+      while (_loop._accumulator >= dt) {
+        _loop._accumulator -= dt
       }
-      for (let key in _rendererMap) {
-        let renderer = _rendererMap[key]
-        renderer.renderState = renderer(renderer.renderState, renderer.finalRenderState, dt)
+
+      for (let chartId of _chartMap) {
+        _chartMap[chartId].render()
       }
+      
     }
     _loop(now)
   })
 }
 
-const gamux = {
-  config: (config = {}) => {
-    // Config the private globals
-    _fps = config.fps || _fps
+const chartx = {
+  constant: {
+    /**
+     * The special COUNT identifier for calculating while rendering
+     */
+    COUNT: uuidv1()
+  },
 
-    let container = config.container
-
-    // Create game layers
-    config.layers.forEach((layer) => {
-      let canvas = document.createElement('canvas')
-      container.appendChild(canvas)
-
-      _updaterMap[layer.name] = layer.updater
-      _rendererMap[layer.name] = layer.render.bind(null, canvas)
-    })
-
-    // Create game store
-    _store = createStore(combineReducer(config.reducerMap, combineUpdater(_updaterMap, _rendererMap)))
-    if (config.init) {
-      config.init(_store.getState())
+  /**
+   * Spawn a chart instance
+   */
+  spawn: () => {
+    // Create store only when the first chart is about to be spawned
+    if (!_store) {
+      _store = createStore(createReducer())
     }
+
+    let newChart = new Chart(_store)
+    _chartMap[newChart.id] = newChart
+
+    return newChart
   },
 
-  getState: (stateKey) => {
-    return _store.getState(stateKey)
-  },
+  /**
+   * Dispose a chart
+   */
+  dispose: (chart) => {
+    if (!chart || !_chartMap[chart.id]) {
+      return
+    }
 
-  layers: {},
+    // If we are going to dispose the last chart
+    if (Object.keys(_chartMap).length === 1 
+      && _chartMap[chart.id]) {
+      window.cancelAnimationFrame(_loop.animationKey)
+      _store = null
+    }
 
-  start: () => {
-    _loop(Date.now())
-  },
-
-  dispatch: (action) => {
-    _store.dispatch(action)
+    _chartMap[chart.id] = undefined
+    chart.dispose()
   }
-
-  // *
-  //  * Game will be available once configured
 }
 
-export default gamux
+export default chartx

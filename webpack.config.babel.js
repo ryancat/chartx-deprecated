@@ -20,11 +20,16 @@ export default [{
   output: {
     path: __dirname + '/dist', // Note: Physical files are only output by the production build task `npm run build`.
     publicPath: '/',
-    filename: 'chartx.js'
+    filename: 'chartx.js',
+    libraryTarget: 'umd'
   },
-  devServer: {
-    contentBase: path.resolve(__dirname)
-  },
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env': {
+        'code': JSON.stringify(process.NODE_ENV || 'DEV')
+      }
+    })
+  ],
   module: {
     loaders: [
       {test: /\.js$/, include: path.join(__dirname, 'src'), loaders: ['babel-loader']}
@@ -38,9 +43,6 @@ export default [{
   output: {
     path: __dirname, // Note: Physical files are only output by the production build task `npm run build`.
     filename: '[name].js'
-  },
-  devServer: {
-    contentBase: path.resolve(__dirname)
   },
   module: {
     loaders: [

@@ -29,6 +29,7 @@
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-register": "^6.26.0",
     "colors": "^1.1.2",
@@ -44,5 +45,8 @@
   },
   "keywords": [
     "chart"
-  ]
+  ],
+  "dependencies": {
+    "uuid": "^3.1.0"
+  }
 }
